@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Chat Users{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="users-container">
+        <h1>Start a Chat</h1>
+        <div class="users-list">
+            {% for user in users %}
+            <div class="user-card">
+                <div class="user-info">
+                    <i class="fas fa-user-circle"></i>
+                    <div class="user-details">
+                        <h3>{{ user.username }}</h3>
+                    </div>
+                </div>
+                <a href="{{ url_for('chat_start', user_id=user._id) }}" class="btn btn-primary">
+                    <i class="fas fa-comment"></i> Start Chat
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<style>
+.users-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 1rem;
+}
+
+.users-container h1 {
+    color: #2c3e50;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.users-list {
+    display: grid;
+    gap: 1rem;
+}
+
+.user-card {
+    background: white;
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.user-info i {
+    font-size: 2rem;
+    color: #1976d2;
+}
+
+.user-details h3 {
+    margin: 0;
+    color: #2c3e50;
+    font-size: 1.2rem;
+}
+
+.btn {
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background-color: #1976d2;
+    color: white;
+    border: none;
+}
+
+.btn-primary:hover {
+    background-color: #1565c0;
+    transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+    .users-container {
+        padding: 1rem;
+    }
+    
+    .user-card {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    
+    .user-info {
+        flex-direction: column;
+    }
+}
+</style>
+{% endblock %} 

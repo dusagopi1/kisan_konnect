@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}Edit {{ product.name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="auth-container" style="max-width: 800px;">
+        <h2>Edit Product</h2>
+        <form method="POST" enctype="multipart/form-data" class="form-layout">
+            <div class="form-main">
+                <div class="form-group">
+                    <label for="name">Product Name</label>
+                    <input type="text" id="name" name="name" value="{{ product.name }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="price">Price</label>
+                    <div class="input-with-icon">
+                        <span class="currency-symbol">$</span>
+                        <input type="number" id="price" name="price" step="0.01" min="0" value="{{ product.price }}" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="quantity">Quantity</label>
+                    <input type="number" id="quantity" name="quantity" step="0.01" min="0" value="{{ product.quantity }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="unit">Unit</label>
+                    <select id="unit" name="unit" required>
+                        <option value="kg" {% if product.unit == 'kg' %}selected{% endif %}>Kilogram (kg)</option>
+                        <option value="g" {% if product.unit == 'g' %}selected{% endif %}>Gram (g)</option>
+                        <option value="lb" {% if product.unit == 'lb' %}selected{% endif %}>Pound (lb)</option>
+                        <option value="oz" {% if product.unit == 'oz' %}selected{% endif %}>Ounce (oz)</option>
+                        <option value="piece" {% if product.unit == 'piece' %}selected{% endif %}>Piece</option>
+                        <option value="bunch" {% if product.unit == 'bunch' %}selected{% endif %}>Bunch</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="category">Category</label>
+                    <select id="category" name="category" required>
+                        <option value="vegetables" {% if product.category == 'vegetables' %}selected{% endif %}>Vegetables</option>
+                        <option value="fruits" {% if product.category == 'fruits' %}selected{% endif %}>Fruits</option>
+                        <option value="grains" {% if product.category == 'grains' %}selected{% endif %}>Grains</option>
+                        <option value="herbs" {% if product.category == 'herbs' %}selected{% endif %}>Herbs</option>
+                        <option value="dairy" {% if product.category == 'dairy' %}selected{% endif %}>Dairy</option>
+                        <option value="eggs" {% if product.category == 'eggs' %}selected{% endif %}>Eggs</option>
+                        <option value="meat" {% if product.category == 'meat' %}selected{% endif %}>Meat</option>
+                        <option value="honey" {% if product.category == 'honey' %}selected{% endif %}>Honey</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="farming_method">Farming Method</label>
+                    <select id="farming_method" name="farming_method" class="farming-method-select" required>
+                        <option value="organic" {% if product.farming_method == 'organic' %}selected{% endif %}>Organic</option>
+                        <option value="conventional" {% if product.farming_method == 'conventional' %}selected{% endif %}>Conventional</option>
+                        <option value="hydroponic" {% if product.farming_method == 'hydroponic' %}selected{% endif %}>Hydroponic</option>
+                        <option value="permaculture" {% if product.farming_method == 'permaculture' %}selected{% endif %}>Permaculture</option>
+                        <option value="biodynamic" {% if product.farming_method == 'biodynamic' %}selected{% endif %}>Biodynamic</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="harvest_date">Harvest Date</label>
+                    <input type="date" id="harvest_date" name="harvest_date" value="{{ product.harvest_date }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="expiry_date">Expiry Date</label>
+                    <input type="date" id="expiry_date" name="expiry_date" value="{{ product.expiry_date }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea id="description" name="description" rows="4" required>{{ product.description }}</textarea>
+                </div>
+            </div>
+
+            <div class="form-image-section">
+                <div class="form-group">
+                    <label>Product Image</label>
+                    <div class="image-upload-container" onclick="document.getElementById('image').click()">
+                        <div class="image-preview">
+                            <img src="{{ product.image_url }}" alt="Product image" id="imagePreview">
+                            <div class="image-upload-placeholder">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>Click to change image</p>
+                            </div>
+                        </div>
+                    </div>
+                    <input type="file" id="image" name="image" class="image-input" accept="image/*">
+                    <p class="image-help-text">Click the box above to change the product image</p>
+                </div>
+            </div>
+
+            <div style="grid-column: span 2; text-align: center;">
+                <button type="submit" class="btn btn-primary">Update Product</button>
+                <a href="{{ url_for('my_products') }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const imageInput = document.getElementById('image');
+    const imagePreview = document.getElementById('imagePreview');
+    const placeholder = document.querySelector('.image-upload-placeholder');
+    
+    // Show current image
+    if (imagePreview.src) {
+        imagePreview.style.display = 'block';
+        placeholder.style.display = 'none';
+    }
+
+    // Handle image preview
+    imageInput.addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                imagePreview.src = e.target.result;
+                imagePreview.style.display = 'block';
+                placeholder.style.display = 'none';
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Validate dates
+    const harvestDate = document.getElementById('harvest_date');
+    const expiryDate = document.getElementById('expiry_date');
+
+    harvestDate.addEventListener('change', function() {
+        expiryDate.min = this.value;
+        if (expiryDate.value && expiryDate.value < this.value) {
+            expiryDate.value = this.value;
+        }
+    });
+
+    expiryDate.addEventListener('change', function() {
+        if (this.value < harvestDate.value) {
+            this.value = harvestDate.value;
+        }
+    });
+});
+</script>
+{% endblock %} 

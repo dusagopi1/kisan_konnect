@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Add Farm Product{% endblock %}
+
+{% block content %}
+<div class="auth-container product-form-container">
+    <h2>Add New Farm Product</h2>
+    <form method="POST" action="{{ url_for('add_product') }}" class="auth-form product-form" enctype="multipart/form-data">
+        <div class="form-layout">
+            <div class="form-main">
+                <div class="form-group">
+                    <label for="name">Product Name</label>
+                    <input type="text" id="name" name="name" required placeholder="e.g., Organic Tomatoes">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="price">Price per Unit</label>
+                        <div class="input-with-icon">
+                            <span class="currency-symbol">$</span>
+                            <input type="number" id="price" name="price" step="0.01" min="0" required placeholder="0.00">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="unit">Unit</label>
+                        <select id="unit" name="unit" required>
+                            <option value="kg">Kilogram (kg)</option>
+                            <option value="g">Gram (g)</option>
+                            <option value="lb">Pound (lb)</option>
+                            <option value="piece">Piece</option>
+                            <option value="dozen">Dozen</option>
+                            <option value="bundle">Bundle</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="quantity">Available Quantity</label>
+                        <input type="number" id="quantity" name="quantity" step="0.1" min="0" required placeholder="0.0">
+                    </div>
+                    <div class="form-group">
+                        <label for="category">Category</label>
+                        <select id="category" name="category" required>
+                            <option value="vegetables">Vegetables</option>
+                            <option value="fruits">Fruits</option>
+                            <option value="grains">Grains</option>
+                            <option value="dairy">Dairy</option>
+                            <option value="herbs">Herbs</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="harvest_date">Harvest Date</label>
+                        <input type="date" id="harvest_date" name="harvest_date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="expiry_date">Best Before Date</label>
+                        <input type="date" id="expiry_date" name="expiry_date" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="farming_method">Farming Method</label>
+                    <select id="farming_method" name="farming_method" required class="farming-method-select">
+                        <option value="organic">Organic</option>
+                        <option value="conventional">Conventional</option>
+                        <option value="hydroponic">Hydroponic</option>
+                        <option value="permaculture">Permaculture</option>
+                        <option value="biodynamic">Biodynamic</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Product Description</label>
+                    <textarea id="description" name="description" rows="4" required 
+                        placeholder="Describe your product's quality, freshness, and any special features..."></textarea>
+                </div>
+            </div>
+
+            <div class="form-image-section">
+                <div class="image-upload-container">
+                    <div class="image-preview" id="imagePreview">
+                        <img src="/static/placeholder-image.jpg" alt="Preview" id="preview">
+                        <div class="image-upload-placeholder">
+                            <i class="fas fa-camera"></i>
+                            <p>Click to upload product image</p>
+                        </div>
+                    </div>
+                    <input type="file" id="image" name="image" accept="image/*" required class="image-input">
+                </div>
+                <p class="image-help-text">Upload a clear, high-quality image of your product</p>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add Product
+            </button>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Cancel
+            </a>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const imageInput = document.getElementById('image');
+    const imagePreview = document.getElementById('preview');
+    const uploadPlaceholder = document.querySelector('.image-upload-placeholder');
+    const harvestDate = document.getElementById('harvest_date');
+    const expiryDate = document.getElementById('expiry_date');
+
+    // Set minimum date for harvest date to today
+    const today = new Date().toISOString().split('T')[0];
+    harvestDate.max = today;
+
+    // Update expiry date minimum based on harvest date
+    harvestDate.addEventListener('change', function() {
+        expiryDate.min = this.value;
+    });
+
+    // Image preview
+    imageInput.addEventListener('change', function(e) {
+        if (e.target.files && e.target.files[0]) {
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                imagePreview.src = e.target.result;
+                uploadPlaceholder.style.display = 'none';
+                imagePreview.style.display = 'block';
+            }
+            
+            reader.readAsDataURL(e.target.files[0]);
+        }
+    });
+
+    // Click anywhere in preview to trigger file input
+    document.querySelector('.image-upload-container').addEventListener('click', function() {
+        imageInput.click();
+    });
+});
+</script>
+{% endblock %} 

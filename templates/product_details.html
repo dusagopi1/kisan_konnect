@@ -1,0 +1,326 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} - Details{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="product-details-container">
+        <div class="product-image-section">
+            <img src="{{ product.image_url }}" alt="{{ product.name }}" class="product-image">
+            <span class="product-badge {{ product.farming_method.lower() }}">
+                {{ product.farming_method }}
+            </span>
+        </div>
+
+        <div class="product-info-section">
+            <div class="product-header">
+                <h1>{{ product.name }}</h1>
+                <span class="category-tag">{{ product.category }}</span>
+            </div>
+
+            <div class="product-meta">
+                <div class="meta-item">
+                    <i class="fas fa-tag"></i>
+                    <div class="meta-content">
+                        <label>Price</label>
+                        <p class="price">${{ "%.2f"|format(product.price) }} per {{ product.unit }}</p>
+                    </div>
+                </div>
+
+                <div class="meta-item">
+                    <i class="fas fa-box"></i>
+                    <div class="meta-content">
+                        <label>Quantity Available</label>
+                        <p class="quantity">{{ product.quantity }} {{ product.unit }}</p>
+                    </div>
+                </div>
+
+                <div class="meta-item">
+                    <i class="fas fa-calendar-alt"></i>
+                    <div class="meta-content">
+                        <label>Harvest Date</label>
+                        <p>{{ product.harvest_date }}</p>
+                    </div>
+                </div>
+
+                <div class="meta-item">
+                    <i class="fas fa-calendar-times"></i>
+                    <div class="meta-content">
+                        <label>Expiry Date</label>
+                        <p>{{ product.expiry_date }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="product-description">
+                <h2>Description</h2>
+                <p>{{ product.description }}</p>
+            </div>
+
+            <div class="seller-info">
+                <div class="seller-header">
+                    <i class="fas fa-user-circle"></i>
+                    <div class="seller-details">
+                        <h3>Seller Information</h3>
+                        <p>{{ product.seller_name }}</p>
+                    </div>
+                </div>
+                {% if current_user.is_authenticated %}
+                    {% if product.seller_id != current_user.id %}
+                    <div class="chat-action">
+                        <p class="chat-prompt">Interested in this product? Chat with the seller directly!</p>
+                        <a href="{{ url_for('chat_start', user_id=product.seller_id) }}" class="btn btn-primary chat-button">
+                            <i class="fas fa-comment"></i> Message Seller
+                        </a>
+                    </div>
+                    {% else %}
+                    <p class="seller-note">This is your product listing</p>
+                    {% endif %}
+                {% else %}
+                <div class="chat-action">
+                    <p class="chat-prompt">Please <a href="{{ url_for('login') }}">login</a> to chat with the seller</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="back-button">
+                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Products
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.product-details-container {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 2rem;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin: 2rem auto;
+}
+
+.product-image-section {
+    position: relative;
+}
+
+.product-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.product-info-section {
+    padding: 2rem;
+}
+
+.product-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.product-header h1 {
+    margin: 0;
+    color: #2c3e50;
+    font-size: 2rem;
+}
+
+.category-tag {
+    background-color: #f1f1f1;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 1rem;
+    color: #34495e;
+}
+
+.product-meta {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.meta-item {
+    display: flex;
+    align-items: start;
+    gap: 1rem;
+}
+
+.meta-item i {
+    font-size: 1.25rem;
+    color: #1976d2;
+    margin-top: 0.25rem;
+}
+
+.meta-content {
+    flex: 1;
+}
+
+.meta-content label {
+    display: block;
+    font-size: 0.875rem;
+    color: #666;
+    margin-bottom: 0.25rem;
+}
+
+.meta-content p {
+    margin: 0;
+    color: #2c3e50;
+    font-size: 1.1rem;
+}
+
+.price {
+    color: #27ae60;
+    font-weight: 600;
+}
+
+.quantity {
+    color: #e67e22;
+    font-weight: 600;
+}
+
+.product-description {
+    margin-bottom: 2rem;
+}
+
+.product-description h2 {
+    font-size: 1.5rem;
+    color: #2c3e50;
+    margin-bottom: 1rem;
+}
+
+.product-description p {
+    color: #34495e;
+    line-height: 1.6;
+}
+
+.seller-info {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+}
+
+.seller-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.seller-header i {
+    font-size: 2.5rem;
+    color: #1976d2;
+}
+
+.seller-details h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: #2c3e50;
+}
+
+.seller-details p {
+    margin: 0.25rem 0 0;
+    color: #666;
+}
+
+.product-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    color: white;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-transform: capitalize;
+}
+
+.product-badge.organic { background-color: #27ae60; }
+.product-badge.conventional { background-color: #7f8c8d; }
+.product-badge.hydroponic { background-color: #3498db; }
+.product-badge.permaculture { background-color: #8e44ad; }
+.product-badge.biodynamic { background-color: #d35400; }
+
+.back-button {
+    margin-top: 2rem;
+}
+
+.chat-action {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e1e1e1;
+    text-align: center;
+}
+
+.chat-prompt {
+    margin-bottom: 1rem;
+    color: #666;
+    font-size: 0.95rem;
+}
+
+.chat-button {
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: transform 0.2s;
+}
+
+.chat-button:hover {
+    transform: translateY(-2px);
+}
+
+.chat-button i {
+    font-size: 1.1rem;
+}
+
+.seller-note {
+    margin: 0.5rem 0 0;
+    color: #666;
+    font-style: italic;
+    text-align: center;
+}
+
+.chat-prompt a {
+    color: #1976d2;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.chat-prompt a:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 992px) {
+    .product-details-container {
+        grid-template-columns: 1fr;
+    }
+
+    .product-image-section {
+        height: 300px;
+    }
+}
+
+@media (max-width: 768px) {
+    .product-meta {
+        grid-template-columns: 1fr;
+    }
+
+    .product-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+}
+</style>
+{% endblock %} 

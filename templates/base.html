@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %} - Farm Market</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="{{ url_for('dashboard') }}" class="nav-brand">Farm Market</a>
+        <div class="nav-links">
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('dashboard') }}" class="nav-link">
+                    <i class="fas fa-store"></i> Browse Products
+                </a>
+                <a href="{{ url_for('my_products') }}" class="nav-link nav-link-highlight">
+                    <i class="fas fa-box"></i> My Products
+                </a>
+                <a href="{{ url_for('add_product') }}" class="nav-link nav-link-action">
+                    <i class="fas fa-plus"></i> Add Product
+                </a>
+                <a href="{{ url_for('chat_users') }}" class="nav-link nav-link-highlight">
+                    <i class="fas fa-comments"></i> Chat
+                </a>
+                <a href="{{ url_for('logout') }}" class="nav-link">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            {% else %}
+                <a href="{{ url_for('login') }}">Login</a>
+                <a href="{{ url_for('register') }}">Register</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <div class="container">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        {% block content %}{% endblock %}
+    </div>
+
+    <style>
+    .nav-link-highlight {
+        background-color: #f8f9fa;
+        color: #1976d2 !important;
+        border: 1px solid #1976d2;
+    }
+
+    .nav-link-highlight:hover {
+        background-color: #e3f2fd;
+    }
+
+    .nav-link-action {
+        background-color: #27ae60;
+        color: white !important;
+    }
+
+    .nav-link-action:hover {
+        background-color: #219a52 !important;
+        color: white !important;
+    }
+    </style>
+</body>
+</html> 

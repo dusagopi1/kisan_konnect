@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div class="welcome-container">
+    <h1>Welcome to Auth System</h1>
+    <p>A secure authentication system built with Flask and MongoDB</p>
+    {% if not current_user.is_authenticated %}
+        <div class="action-buttons">
+            <a href="{{ url_for('login') }}" class="btn btn-primary">Login</a>
+            <a href="{{ url_for('register') }}" class="btn btn-secondary">Register</a>
+        </div>
+    {% else %}
+        <p>Welcome back, {{ current_user.username }}!</p>
+        <div class="action-buttons">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Go to Dashboard</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %} 
