@@ -3,145 +3,286 @@
 {% block title %}Add Farm Product{% endblock %}
 
 {% block content %}
-<div class="auth-container product-form-container">
-    <h2>Add New Farm Product</h2>
-    <form method="POST" action="{{ url_for('add_product') }}" class="auth-form product-form" enctype="multipart/form-data">
-        <div class="form-layout">
-            <div class="form-main">
-                <div class="form-group">
-                    <label for="name">Product Name</label>
-                    <input type="text" id="name" name="name" required placeholder="e.g., Organic Tomatoes">
-                </div>
+<div class="add-product-container">
+    <div class="product-form-card">
+        <div class="form-progress">
+            <div class="progress-step active" data-step="1">
+                <i class="fas fa-info-circle"></i>
+                <span>Basic Info</span>
+            </div>
+            <div class="progress-step" data-step="2">
+                <i class="fas fa-leaf"></i>
+                <span>Details</span>
+            </div>
+            <div class="progress-step" data-step="3">
+                <i class="fas fa-image"></i>
+                <span>Image</span>
+            </div>
+        </div>
 
-                <div class="form-row">
+        <form method="POST" action="{{ url_for('add_product') }}" class="product-form" enctype="multipart/form-data" id="addProductForm">
+            <div class="form-sections">
+                <!-- Section 1: Basic Information -->
+                <div class="form-section active" data-section="1">
+                    <h2><i class="fas fa-info-circle"></i> Basic Information</h2>
                     <div class="form-group">
-                        <label for="price">Price per Unit</label>
-                        <div class="input-with-icon">
-                            <span class="currency-symbol">$</span>
-                            <input type="number" id="price" name="price" step="0.01" min="0" required placeholder="0.00">
+                        <label for="name">Product Name</label>
+                        <input type="text" id="name" name="name" required 
+                               placeholder="e.g., Organic Tomatoes"
+                               data-tooltip="Enter a clear, descriptive name for your product">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="price">Price per Unit</label>
+                            <div class="input-with-icon">
+                                <span class="currency-symbol">$</span>
+                                <input type="number" id="price" name="price" step="0.01" min="0" required 
+                                       placeholder="0.00"
+                                       data-tooltip="Set a competitive price per unit">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="unit">Unit</label>
+                            <select id="unit" name="unit" required
+                                    data-tooltip="Choose how you want to sell your product">
+                                <option value="kg">Kilogram (kg)</option>
+                                <option value="g">Gram (g)</option>
+                                <option value="lb">Pound (lb)</option>
+                                <option value="piece">Piece</option>
+                                <option value="dozen">Dozen</option>
+                                <option value="bundle">Bundle</option>
+                            </select>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label for="unit">Unit</label>
-                        <select id="unit" name="unit" required>
-                            <option value="kg">Kilogram (kg)</option>
-                            <option value="g">Gram (g)</option>
-                            <option value="lb">Pound (lb)</option>
-                            <option value="piece">Piece</option>
-                            <option value="dozen">Dozen</option>
-                            <option value="bundle">Bundle</option>
-                        </select>
-                    </div>
-                </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="quantity">Available Quantity</label>
-                        <input type="number" id="quantity" name="quantity" step="0.1" min="0" required placeholder="0.0">
-                    </div>
                     <div class="form-group">
                         <label for="category">Category</label>
-                        <select id="category" name="category" required>
-                            <option value="vegetables">Vegetables</option>
-                            <option value="fruits">Fruits</option>
-                            <option value="grains">Grains</option>
-                            <option value="dairy">Dairy</option>
-                            <option value="herbs">Herbs</option>
-                            <option value="other">Other</option>
+                        <select id="category" name="category" required class="category-select"
+                                data-tooltip="Select the category that best fits your product">
+                            <option value="vegetables">🥬 Vegetables</option>
+                            <option value="fruits">🍎 Fruits</option>
+                            <option value="grains">🌾 Grains</option>
+                            <option value="dairy">🥛 Dairy</option>
+                            <option value="herbs">🌿 Herbs</option>
+                            <option value="other">📦 Other</option>
                         </select>
                     </div>
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="harvest_date">Harvest Date</label>
-                        <input type="date" id="harvest_date" name="harvest_date" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="expiry_date">Best Before Date</label>
-                        <input type="date" id="expiry_date" name="expiry_date" required>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="farming_method">Farming Method</label>
-                    <select id="farming_method" name="farming_method" required class="farming-method-select">
-                        <option value="organic">Organic</option>
-                        <option value="conventional">Conventional</option>
-                        <option value="hydroponic">Hydroponic</option>
-                        <option value="permaculture">Permaculture</option>
-                        <option value="biodynamic">Biodynamic</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="description">Product Description</label>
-                    <textarea id="description" name="description" rows="4" required 
-                        placeholder="Describe your product's quality, freshness, and any special features..."></textarea>
-                </div>
-            </div>
-
-            <div class="form-image-section">
-                <div class="image-upload-container">
-                    <div class="image-preview" id="imagePreview">
-                        <img src="/static/placeholder-image.jpg" alt="Preview" id="preview">
-                        <div class="image-upload-placeholder">
-                            <i class="fas fa-camera"></i>
-                            <p>Click to upload product image</p>
+                <!-- Section 2: Product Details -->
+                <div class="form-section" data-section="2">
+                    <h2><i class="fas fa-leaf"></i> Product Details</h2>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="quantity">Available Quantity</label>
+                            <input type="number" id="quantity" name="quantity" step="0.1" min="0" required 
+                                   placeholder="0.0"
+                                   data-tooltip="Enter the total quantity available for sale">
+                        </div>
+                        <div class="form-group">
+                            <label for="farming_method">Farming Method</label>
+                            <select id="farming_method" name="farming_method" required class="farming-method-select"
+                                    data-tooltip="Select your farming practice">
+                                <option value="organic">🌱 Organic</option>
+                                <option value="conventional">🚜 Conventional</option>
+                                <option value="hydroponic">💧 Hydroponic</option>
+                                <option value="permaculture">🌿 Permaculture</option>
+                                <option value="biodynamic">🌍 Biodynamic</option>
+                            </select>
                         </div>
                     </div>
-                    <input type="file" id="image" name="image" accept="image/*" required class="image-input">
-                </div>
-                <p class="image-help-text">Upload a clear, high-quality image of your product</p>
-            </div>
-        </div>
 
-        <div class="form-actions">
-            <button type="submit" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Add Product
-            </button>
-            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
-                <i class="fas fa-times"></i> Cancel
-            </a>
-        </div>
-    </form>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="harvest_date">Harvest Date</label>
+                            <input type="date" id="harvest_date" name="harvest_date" required
+                                   data-tooltip="When was/will the product be harvested?">
+                        </div>
+                        <div class="form-group">
+                            <label for="expiry_date">Best Before Date</label>
+                            <input type="date" id="expiry_date" name="expiry_date" required
+                                   data-tooltip="When should the product be consumed by?">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">Product Description</label>
+                        <textarea id="description" name="description" rows="4" required 
+                                placeholder="Describe your product's quality, freshness, and any special features..."
+                                data-tooltip="Provide detailed information about your product"></textarea>
+                    </div>
+                </div>
+
+                <!-- Section 3: Product Image -->
+                <div class="form-section" data-section="3">
+                    <h2><i class="fas fa-image"></i> Product Image</h2>
+                    <div class="image-upload-section">
+                        <div class="image-upload-container">
+                            <div class="image-preview" id="imagePreview">
+                                <img src="/static/placeholder-image.jpg" alt="Preview" id="preview">
+                                <div class="image-upload-placeholder">
+                                    <i class="fas fa-camera"></i>
+                                    <p>Click or drag to upload product image</p>
+                                </div>
+                            </div>
+                            <input type="file" id="image" name="image" accept="image/*" required class="image-input"
+                                   data-tooltip="Upload a clear, high-quality image">
+                        </div>
+                        <div class="image-guidelines">
+                            <h4>Image Guidelines:</h4>
+                            <ul>
+                                <li>Use high-quality, well-lit photos</li>
+                                <li>Show the product clearly</li>
+                                <li>Use a clean background</li>
+                                <li>Maximum size: 5MB</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-navigation">
+                <button type="button" class="btn btn-secondary prev-section" style="display: none;">
+                    <i class="fas fa-arrow-left"></i> Previous
+                </button>
+                <button type="button" class="btn btn-primary next-section">
+                    Next <i class="fas fa-arrow-right"></i>
+                </button>
+                <button type="submit" class="btn btn-success submit-form" style="display: none;">
+                    <i class="fas fa-check"></i> Add Product
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('addProductForm');
+    const sections = document.querySelectorAll('.form-section');
+    const progressSteps = document.querySelectorAll('.progress-step');
+    const nextButtons = document.querySelectorAll('.next-section');
+    const prevButtons = document.querySelectorAll('.prev-section');
+    const submitButton = document.querySelector('.submit-form');
+    let currentSection = 1;
+
+    // Image preview functionality
     const imageInput = document.getElementById('image');
-    const imagePreview = document.getElementById('preview');
-    const uploadPlaceholder = document.querySelector('.image-upload-placeholder');
-    const harvestDate = document.getElementById('harvest_date');
-    const expiryDate = document.getElementById('expiry_date');
+    const previewImg = document.getElementById('preview');
+    const previewContainer = document.getElementById('imagePreview');
 
-    // Set minimum date for harvest date to today
-    const today = new Date().toISOString().split('T')[0];
-    harvestDate.max = today;
-
-    // Update expiry date minimum based on harvest date
-    harvestDate.addEventListener('change', function() {
-        expiryDate.min = this.value;
-    });
-
-    // Image preview
     imageInput.addEventListener('change', function(e) {
-        if (e.target.files && e.target.files[0]) {
+        const file = e.target.files[0];
+        if (file) {
             const reader = new FileReader();
-            
             reader.onload = function(e) {
-                imagePreview.src = e.target.result;
-                uploadPlaceholder.style.display = 'none';
-                imagePreview.style.display = 'block';
+                previewImg.src = e.target.result;
+                previewContainer.classList.add('has-image');
             }
-            
-            reader.readAsDataURL(e.target.files[0]);
+            reader.readAsDataURL(file);
         }
     });
 
-    // Click anywhere in preview to trigger file input
-    document.querySelector('.image-upload-container').addEventListener('click', function() {
-        imageInput.click();
+    // Drag and drop functionality
+    previewContainer.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        this.classList.add('dragover');
+    });
+
+    previewContainer.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        this.classList.remove('dragover');
+    });
+
+    previewContainer.addEventListener('drop', function(e) {
+        e.preventDefault();
+        this.classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) {
+            imageInput.files = e.dataTransfer.files;
+            const event = new Event('change');
+            imageInput.dispatchEvent(event);
+        }
+    });
+
+    // Form navigation
+    function updateSection(newSection) {
+        sections.forEach(section => {
+            section.classList.remove('active');
+            if (section.dataset.section == newSection) {
+                section.classList.add('active');
+            }
+        });
+
+        progressSteps.forEach(step => {
+            step.classList.remove('active');
+            if (step.dataset.step <= newSection) {
+                step.classList.add('active');
+            }
+        });
+
+        currentSection = newSection;
+        updateNavigationButtons();
+    }
+
+    function updateNavigationButtons() {
+        const prevButton = document.querySelector('.prev-section');
+        const nextButton = document.querySelector('.next-section');
+        
+        prevButton.style.display = currentSection > 1 ? 'block' : 'none';
+        nextButton.style.display = currentSection < 3 ? 'block' : 'none';
+        submitButton.style.display = currentSection === 3 ? 'block' : 'none';
+    }
+
+    document.querySelector('.next-section').addEventListener('click', function() {
+        if (currentSection < 3) {
+            updateSection(currentSection + 1);
+        }
+    });
+
+    document.querySelector('.prev-section').addEventListener('click', function() {
+        if (currentSection > 1) {
+            updateSection(currentSection - 1);
+        }
+    });
+
+    // Form validation
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        if (form.checkValidity()) {
+            form.submit();
+        } else {
+            // Find the first section with invalid fields
+            let firstInvalidSection = 1;
+            sections.forEach(section => {
+                const inputs = section.querySelectorAll('input, select, textarea');
+                inputs.forEach(input => {
+                    if (!input.checkValidity()) {
+                        firstInvalidSection = parseInt(section.dataset.section);
+                    }
+                });
+            });
+            updateSection(firstInvalidSection);
+        }
+    });
+
+    // Initialize tooltips
+    const tooltips = document.querySelectorAll('[data-tooltip]');
+    tooltips.forEach(element => {
+        element.addEventListener('focus', function() {
+            const tooltip = document.createElement('div');
+            tooltip.className = 'tooltip';
+            tooltip.textContent = this.dataset.tooltip;
+            this.parentNode.appendChild(tooltip);
+        });
+
+        element.addEventListener('blur', function() {
+            const tooltip = this.parentNode.querySelector('.tooltip');
+            if (tooltip) {
+                tooltip.remove();
+            }
+        });
     });
 });
 </script>
