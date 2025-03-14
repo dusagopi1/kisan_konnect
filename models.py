@@ -13,14 +13,41 @@ load_dotenv()
 MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb://localhost:27017/')
 DATABASE_NAME = os.getenv('DATABASE_NAME', 'user_auth_db')
 
-client = MongoClient(MONGODB_URI, 
-                    tls=True, 
-                    tlsAllowInvalidCertificates=True)
+# MongoDB client with retry settings and proper SSL config
+client = MongoClient(
+    MONGODB_URI,
+    tls=True,
+    tlsAllowInvalidCertificates=True,
+    serverSelectionTimeoutMS=5000,
+    connectTimeoutMS=5000,
+    socketTimeoutMS=5000,
+    maxPoolSize=50,
+    retryWrites=True,
+    retryReads=True
+)
+
+try:
+    # Verify the connection
+    client.admin.command('ping')
+    print("Successfully connected to MongoDB")
+except Exception as e:
+    print(f"Error connecting to MongoDB: {str(e)}")
+
 db = client[DATABASE_NAME]
 users_collection = db['users']
 products_collection = db['products']
 chats_collection = db['chats']
 messages_collection = db['messages']
+
+# Ensure indexes for better query performance
+try:
+    users_collection.create_index([('username', 1)])
+    users_collection.create_index([('email', 1)], unique=True)
+    chats_collection.create_index([('participants', 1)])
+    messages_collection.create_index([('chat_id', 1), ('created_at', -1)])
+    print("Database indexes created successfully")
+except Exception as e:
+    print(f"Error creating indexes: {str(e)}")
 
 # Configure upload folder
 UPLOAD_FOLDER = 'static/uploads'
@@ -58,55 +85,77 @@ class Chat:
 
     @staticmethod
     def get_or_create(user1_id, user2_id):
-        participants = sorted([str(user1_id), str(user2_id)])
-        chat = chats_collection.find_one({
-            'participants': participants
-        })
-        
-        if not chat:
-            chat_obj = Chat(participants)
-            result = chats_collection.insert_one(chat_obj.to_dict())
-            chat = chats_collection.find_one({'_id': result.inserted_id})
-        
-        # Convert ObjectId to string
-        chat['_id'] = str(chat['_id'])
-        return chat
+        try:
+            participants = sorted([str(user1_id), str(user2_id)])
+            chat = chats_collection.find_one({
+                'participants': participants
+            })
+            
+            if not chat:
+                chat_obj = Chat(participants)
+                result = chats_collection.insert_one(chat_obj.to_dict())
+                chat = chats_collection.find_one({'_id': result.inserted_id})
+            
+            if not chat:
+                raise Exception("Failed to create or retrieve chat")
+                
+            # Convert ObjectId to string
+            chat['_id'] = str(chat['_id'])
+            return chat
+        except Exception as e:
+            print(f"Error in get_or_create: {str(e)}")
+            raise
 
     @staticmethod
     def get_user_chats(user_id):
-        chats = list(chats_collection.find({
-            'participants': str(user_id)
-        }).sort('created_at', -1))
-        
-        for chat in chats:
-            chat['_id'] = str(chat['_id'])
-            # Get the other participant's info
-            other_user_id = next(uid for uid in chat['participants'] if uid != str(user_id))
-            other_user = users_collection.find_one({'_id': ObjectId(other_user_id)})
-            chat['other_user'] = {
-                'id': str(other_user['_id']),
-                'username': other_user['username']
-            }
-            # Get last message
-            last_message = Message.get_chat_last_message(chat['_id'])
-            chat['last_message'] = last_message.to_dict() if last_message else None
-        
-        return chats
-
-    @staticmethod
-    def get_by_id(chat_id, current_user_id=None):
-        chat = chats_collection.find_one({'_id': ObjectId(chat_id)})
-        if chat:
-            chat['_id'] = str(chat['_id'])
-            if current_user_id:
+        try:
+            chats = list(chats_collection.find({
+                'participants': str(user_id)
+            }).sort('created_at', -1))
+            
+            for chat in chats:
+                chat['_id'] = str(chat['_id'])
                 # Get the other participant's info
-                other_user_id = next(uid for uid in chat['participants'] if uid != str(current_user_id))
+                other_user_id = next(uid for uid in chat['participants'] if uid != str(user_id))
                 other_user = users_collection.find_one({'_id': ObjectId(other_user_id)})
+                if not other_user:
+                    continue
                 chat['other_user'] = {
                     'id': str(other_user['_id']),
                     'username': other_user['username']
                 }
-        return chat
+                # Get last message
+                try:
+                    last_message = Message.get_chat_last_message(chat['_id'])
+                    chat['last_message'] = last_message.to_dict() if last_message else None
+                except Exception as e:
+                    print(f"Error getting last message for chat {chat['_id']}: {str(e)}")
+                    chat['last_message'] = None
+            
+            return chats
+        except Exception as e:
+            print(f"Error in get_user_chats: {str(e)}")
+            raise
+
+    @staticmethod
+    def get_by_id(chat_id, current_user_id=None):
+        try:
+            chat = chats_collection.find_one({'_id': ObjectId(chat_id)})
+            if chat:
+                chat['_id'] = str(chat['_id'])
+                if current_user_id:
+                    # Get the other participant's info
+                    other_user_id = next(uid for uid in chat['participants'] if uid != str(current_user_id))
+                    other_user = users_collection.find_one({'_id': ObjectId(other_user_id)})
+                    if other_user:
+                        chat['other_user'] = {
+                            'id': str(other_user['_id']),
+                            'username': other_user['username']
+                        }
+            return chat
+        except Exception as e:
+            print(f"Error in get_by_id: {str(e)}")
+            raise
 
 class Message:
     def __init__(self, chat_id, sender_id, content):

@@ -241,24 +241,34 @@ def delete_product(product_id):
 @app.route('/chat')
 @login_required
 def chat_index():
-    chats = Chat.get_user_chats(current_user.id)
-    return render_template('chat/index.html', chats=chats, active_chat=None)
+    try:
+        chats = Chat.get_user_chats(current_user.id)
+        return render_template('chat/index.html', chats=chats, active_chat=None, messages=[])
+    except Exception as e:
+        print(f"Error in chat_index: {str(e)}")
+        flash('Unable to load chats at this time. Please try again later.', 'error')
+        return redirect(url_for('dashboard'))
 
 @app.route('/chat/<chat_id>')
 @login_required
 def chat_detail(chat_id):
-    chat = Chat.get_by_id(chat_id, current_user.id)
-    if not chat or str(current_user.id) not in chat['participants']:
-        flash('Chat not found or access denied')
-        return redirect(url_for('chat_index'))
-    
-    chats = Chat.get_user_chats(current_user.id)
-    messages = Message.get_chat_messages(chat_id)
-    return render_template('chat/index.html', 
-                         chats=chats, 
-                         active_chat=chat, 
-                         active_chat_id=chat_id,
-                         messages=messages)
+    try:
+        chat = Chat.get_by_id(chat_id, current_user.id)
+        if not chat or str(current_user.id) not in chat['participants']:
+            flash('Chat not found or access denied')
+            return redirect(url_for('chat_index'))
+        
+        chats = Chat.get_user_chats(current_user.id)
+        messages = Message.get_chat_messages(chat_id)
+        return render_template('chat/index.html', 
+                             chats=chats, 
+                             active_chat=chat, 
+                             active_chat_id=chat_id,
+                             messages=messages)
+    except Exception as e:
+        print(f"Error in chat_detail: {str(e)}")
+        flash('Unable to load chat at this time. Please try again later.', 'error')
+        return redirect(url_for('dashboard'))
 
 @app.route('/chat/start/<user_id>')
 @login_required
