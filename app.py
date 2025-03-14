@@ -19,11 +19,14 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', os.urandom(24))
 
+# Redis URL configuration
+REDIS_URL = os.getenv('REDIS_URL', 'redis://red-cva0vm9c1ekc738ophr0:6379')
+
 # SocketIO setup with production-ready configuration
 socketio = SocketIO(
     app,
     async_mode='eventlet',
-    message_queue=os.getenv('REDIS_URL'),  # Get Redis URL from environment variable
+    message_queue=REDIS_URL,
     cors_allowed_origins="*",
     logger=True,
     engineio_logger=True,
