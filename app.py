@@ -7,6 +7,10 @@ from pymongo import MongoClient
 from dotenv import load_dotenv
 from bson import ObjectId
 from flask_socketio import SocketIO, emit, join_room, leave_room
+import eventlet
+
+# Patch eventlet for better WebSocket support
+eventlet.monkey_patch()
 
 # Load environment variables
 load_dotenv()
@@ -14,13 +18,20 @@ load_dotenv()
 # Flask app setup
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', os.urandom(24))
-socketio = SocketIO(app, 
-                   async_mode='eventlet',  # Change to eventlet
-                   cors_allowed_origins="*", 
-                   logger=True, 
-                   engineio_logger=True,
-                   ping_timeout=60,
-                   ping_interval=25)
+
+# SocketIO setup with production-ready configuration
+socketio = SocketIO(
+    app,
+    async_mode='eventlet',
+    message_queue='redis://',
+    cors_allowed_origins="*",
+    logger=True,
+    engineio_logger=True,
+    ping_timeout=5000,
+    ping_interval=2500,
+    max_http_buffer_size=100000000,
+    async_handlers=True
+)
 
 # MongoDB setup
 MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb://localhost:27017/')
