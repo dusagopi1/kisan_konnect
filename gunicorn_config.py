@@ -2,11 +2,11 @@ import multiprocessing
 
 # Worker settings
 worker_class = "eventlet"
-workers = 1
+workers = 1  # Keep this as 1 when using eventlet
 threads = 1000
 
 # Timeout settings
-timeout = 120
+timeout = 300  # Increased timeout for WebSocket connections
 keepalive = 5
 
 # Server settings
@@ -27,4 +27,8 @@ loglevel = "info"
 proc_name = "kisan_konnect"
 
 # Eventlet specific
-worker_connections = 1000 
+worker_connections = 1000
+
+# WebSocket specific
+websocket_timeout = 3600  # 1 hour
+graceful_timeout = 60 
