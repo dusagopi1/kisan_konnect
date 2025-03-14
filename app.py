@@ -1,3 +1,7 @@
+# Monkey patch first, before any other imports
+import eventlet
+eventlet.monkey_patch()
+
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 import bcrypt
@@ -7,10 +11,6 @@ from pymongo import MongoClient
 from dotenv import load_dotenv
 from bson import ObjectId
 from flask_socketio import SocketIO, emit, join_room, leave_room
-import eventlet
-
-# Patch eventlet for better WebSocket support
-eventlet.monkey_patch()
 
 # Load environment variables
 load_dotenv()
