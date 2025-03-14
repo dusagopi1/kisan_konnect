@@ -23,7 +23,7 @@ app.secret_key = os.getenv('SECRET_KEY', os.urandom(24))
 socketio = SocketIO(
     app,
     async_mode='eventlet',
-    message_queue='redis://',
+    message_queue=os.getenv('REDIS_URL'),  # Get Redis URL from environment variable
     cors_allowed_origins="*",
     logger=True,
     engineio_logger=True,
@@ -33,7 +33,7 @@ socketio = SocketIO(
     async_handlers=True
 )
 
-# MongoDB setup
+# MongoDB setup - Keep this as your main database
 MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb://localhost:27017/')
 DATABASE_NAME = os.getenv('DATABASE_NAME', 'user_auth_db')
 
