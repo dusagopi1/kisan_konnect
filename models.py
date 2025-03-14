@@ -10,8 +10,11 @@ import uuid
 load_dotenv()
 
 # MongoDB setup
-client = MongoClient('mongodb://localhost:27017/')
-db = client['user_auth_db']
+MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb://localhost:27017/')
+DATABASE_NAME = os.getenv('DATABASE_NAME', 'user_auth_db')
+
+client = MongoClient(MONGODB_URI)
+db = client[DATABASE_NAME]
 users_collection = db['users']
 products_collection = db['products']
 chats_collection = db['chats']

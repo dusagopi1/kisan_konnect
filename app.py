@@ -11,14 +11,18 @@ from flask_socketio import SocketIO, emit, join_room, leave_room
 # Load environment variables
 load_dotenv()
 
+# Flask app setup
 app = Flask(__name__)
-app.secret_key = os.urandom(24)  # For session management
+app.secret_key = os.getenv('SECRET_KEY', os.urandom(24))
 socketio = SocketIO(app, async_mode='threading', cors_allowed_origins="*", logger=True, engineio_logger=True)
 
 # MongoDB setup
-client = MongoClient('mongodb://localhost:27017/')
-db = client['user_auth_db']
-products_collection = db['products']  # New collection for products
+MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb://localhost:27017/')
+DATABASE_NAME = os.getenv('DATABASE_NAME', 'user_auth_db')
+
+client = MongoClient(MONGODB_URI)
+db = client[DATABASE_NAME]
+products_collection = db['products']
 
 # Flask-Login setup
 login_manager = LoginManager()
