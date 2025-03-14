@@ -242,10 +242,14 @@ def delete_product(product_id):
 @login_required
 def chat_index():
     try:
+        print(f"Attempting to load chats for user: {current_user.id}")
         chats = Chat.get_user_chats(current_user.id)
+        print(f"Successfully loaded {len(chats) if chats else 0} chats")
         return render_template('chat/index.html', chats=chats, active_chat=None, messages=[])
     except Exception as e:
-        print(f"Error in chat_index: {str(e)}")
+        import traceback
+        print(f"Error in chat_index for user {current_user.id}: {str(e)}")
+        print(f"Traceback: {traceback.format_exc()}")
         flash('Unable to load chats at this time. Please try again later.', 'error')
         return redirect(url_for('dashboard'))
 
@@ -253,20 +257,33 @@ def chat_index():
 @login_required
 def chat_detail(chat_id):
     try:
+        print(f"Loading chat {chat_id} for user {current_user.id}")
         chat = Chat.get_by_id(chat_id, current_user.id)
-        if not chat or str(current_user.id) not in chat['participants']:
+        
+        if not chat:
+            print(f"Chat {chat_id} not found")
+            flash('Chat not found or access denied')
+            return redirect(url_for('chat_index'))
+            
+        if str(current_user.id) not in chat['participants']:
+            print(f"User {current_user.id} not authorized for chat {chat_id}")
             flash('Chat not found or access denied')
             return redirect(url_for('chat_index'))
         
+        print("Loading user chats and messages")
         chats = Chat.get_user_chats(current_user.id)
         messages = Message.get_chat_messages(chat_id)
+        print(f"Loaded {len(messages)} messages")
+        
         return render_template('chat/index.html', 
                              chats=chats, 
                              active_chat=chat, 
                              active_chat_id=chat_id,
                              messages=messages)
     except Exception as e:
-        print(f"Error in chat_detail: {str(e)}")
+        import traceback
+        print(f"Error in chat_detail for chat {chat_id}, user {current_user.id}: {str(e)}")
+        print(f"Traceback: {traceback.format_exc()}")
         flash('Unable to load chat at this time. Please try again later.', 'error')
         return redirect(url_for('dashboard'))
 

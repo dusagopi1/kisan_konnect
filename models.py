@@ -18,12 +18,14 @@ client = MongoClient(
     MONGODB_URI,
     tls=True,
     tlsAllowInvalidCertificates=True,
-    serverSelectionTimeoutMS=5000,
-    connectTimeoutMS=5000,
-    socketTimeoutMS=5000,
+    serverSelectionTimeoutMS=10000,  # Increased timeout
+    connectTimeoutMS=10000,          # Increased timeout
+    socketTimeoutMS=10000,           # Increased timeout
     maxPoolSize=50,
     retryWrites=True,
-    retryReads=True
+    retryReads=True,
+    w='majority',                    # Ensure writes are acknowledged
+    readPreference='primaryPreferred'
 )
 
 try:
@@ -32,6 +34,8 @@ try:
     print("Successfully connected to MongoDB")
 except Exception as e:
     print(f"Error connecting to MongoDB: {str(e)}")
+    print("MongoDB connection string:", MONGODB_URI)
+    raise
 
 db = client[DATABASE_NAME]
 users_collection = db['users']
@@ -48,6 +52,7 @@ try:
     print("Database indexes created successfully")
 except Exception as e:
     print(f"Error creating indexes: {str(e)}")
+    print("Will continue without indexes")
 
 # Configure upload folder
 UPLOAD_FOLDER = 'static/uploads'
@@ -86,75 +91,134 @@ class Chat:
     @staticmethod
     def get_or_create(user1_id, user2_id):
         try:
+            print(f"Attempting to get/create chat for users {user1_id} and {user2_id}")
             participants = sorted([str(user1_id), str(user2_id)])
+            
+            # First try to find existing chat
             chat = chats_collection.find_one({
                 'participants': participants
             })
             
-            if not chat:
-                chat_obj = Chat(participants)
-                result = chats_collection.insert_one(chat_obj.to_dict())
-                chat = chats_collection.find_one({'_id': result.inserted_id})
+            if chat:
+                print(f"Found existing chat: {chat['_id']}")
+                chat['_id'] = str(chat['_id'])
+                return chat
             
+            # Create new chat if none exists
+            print("No existing chat found, creating new one")
+            chat_obj = Chat(participants)
+            result = chats_collection.insert_one(chat_obj.to_dict())
+            
+            if not result.inserted_id:
+                raise Exception("Failed to insert new chat")
+            
+            chat = chats_collection.find_one({'_id': result.inserted_id})
             if not chat:
-                raise Exception("Failed to create or retrieve chat")
-                
-            # Convert ObjectId to string
+                raise Exception("Failed to retrieve newly created chat")
+            
             chat['_id'] = str(chat['_id'])
+            print(f"Successfully created new chat: {chat['_id']}")
             return chat
+            
         except Exception as e:
+            import traceback
             print(f"Error in get_or_create: {str(e)}")
+            print(f"Traceback: {traceback.format_exc()}")
             raise
 
     @staticmethod
     def get_user_chats(user_id):
         try:
+            print(f"Fetching chats for user: {user_id}")
+            
+            # Verify user exists first
+            user = users_collection.find_one({'_id': ObjectId(user_id)})
+            if not user:
+                raise Exception(f"User {user_id} not found")
+            
+            # Get all chats for user
             chats = list(chats_collection.find({
                 'participants': str(user_id)
             }).sort('created_at', -1))
             
-            for chat in chats:
-                chat['_id'] = str(chat['_id'])
-                # Get the other participant's info
-                other_user_id = next(uid for uid in chat['participants'] if uid != str(user_id))
-                other_user = users_collection.find_one({'_id': ObjectId(other_user_id)})
-                if not other_user:
-                    continue
-                chat['other_user'] = {
-                    'id': str(other_user['_id']),
-                    'username': other_user['username']
-                }
-                # Get last message
-                try:
-                    last_message = Message.get_chat_last_message(chat['_id'])
-                    chat['last_message'] = last_message.to_dict() if last_message else None
-                except Exception as e:
-                    print(f"Error getting last message for chat {chat['_id']}: {str(e)}")
-                    chat['last_message'] = None
+            print(f"Found {len(chats)} chats for user {user_id}")
             
-            return chats
+            processed_chats = []
+            for chat in chats:
+                try:
+                    chat['_id'] = str(chat['_id'])
+                    # Get the other participant's info
+                    other_user_id = next(uid for uid in chat['participants'] if uid != str(user_id))
+                    other_user = users_collection.find_one({'_id': ObjectId(other_user_id)})
+                    
+                    if not other_user:
+                        print(f"Warning: Other user {other_user_id} not found for chat {chat['_id']}")
+                        continue
+                        
+                    chat['other_user'] = {
+                        'id': str(other_user['_id']),
+                        'username': other_user['username']
+                    }
+                    
+                    # Get last message
+                    try:
+                        last_message = Message.get_chat_last_message(chat['_id'])
+                        chat['last_message'] = last_message.to_dict() if last_message else None
+                    except Exception as e:
+                        print(f"Error getting last message for chat {chat['_id']}: {str(e)}")
+                        chat['last_message'] = None
+                    
+                    processed_chats.append(chat)
+                except Exception as e:
+                    print(f"Error processing chat {chat.get('_id', 'unknown')}: {str(e)}")
+                    continue
+            
+            print(f"Successfully processed {len(processed_chats)} chats")
+            return processed_chats
+            
         except Exception as e:
+            import traceback
             print(f"Error in get_user_chats: {str(e)}")
+            print(f"Traceback: {traceback.format_exc()}")
             raise
 
     @staticmethod
     def get_by_id(chat_id, current_user_id=None):
         try:
+            print(f"Fetching chat {chat_id} for user {current_user_id}")
+            
+            # Verify chat exists
             chat = chats_collection.find_one({'_id': ObjectId(chat_id)})
-            if chat:
-                chat['_id'] = str(chat['_id'])
-                if current_user_id:
-                    # Get the other participant's info
-                    other_user_id = next(uid for uid in chat['participants'] if uid != str(current_user_id))
-                    other_user = users_collection.find_one({'_id': ObjectId(other_user_id)})
-                    if other_user:
-                        chat['other_user'] = {
-                            'id': str(other_user['_id']),
-                            'username': other_user['username']
-                        }
+            if not chat:
+                print(f"Chat {chat_id} not found")
+                return None
+                
+            chat['_id'] = str(chat['_id'])
+            
+            if current_user_id:
+                if str(current_user_id) not in chat['participants']:
+                    print(f"User {current_user_id} not authorized for chat {chat_id}")
+                    return None
+                    
+                # Get the other participant's info
+                other_user_id = next(uid for uid in chat['participants'] if uid != str(current_user_id))
+                other_user = users_collection.find_one({'_id': ObjectId(other_user_id)})
+                
+                if other_user:
+                    chat['other_user'] = {
+                        'id': str(other_user['_id']),
+                        'username': other_user['username']
+                    }
+                else:
+                    print(f"Warning: Other user {other_user_id} not found for chat {chat_id}")
+            
+            print(f"Successfully fetched chat {chat_id}")
             return chat
+            
         except Exception as e:
+            import traceback
             print(f"Error in get_by_id: {str(e)}")
+            print(f"Traceback: {traceback.format_exc()}")
             raise
 
 class Message:
