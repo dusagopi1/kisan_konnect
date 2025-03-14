@@ -14,7 +14,13 @@ load_dotenv()
 # Flask app setup
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', os.urandom(24))
-socketio = SocketIO(app, async_mode='threading', cors_allowed_origins="*", logger=True, engineio_logger=True)
+socketio = SocketIO(app, 
+                   async_mode='eventlet',  # Change to eventlet
+                   cors_allowed_origins="*", 
+                   logger=True, 
+                   engineio_logger=True,
+                   ping_timeout=60,
+                   ping_interval=25)
 
 # MongoDB setup
 MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb://localhost:27017/')
@@ -274,30 +280,49 @@ def chat_users():
 
 @socketio.on('connect')
 def handle_connect():
-    print('Client connected')
+    if not current_user.is_authenticated:
+        return False  # Reject connection if user is not authenticated
+    print(f'Client connected: {current_user.id}')
 
 @socketio.on('disconnect')
 def handle_disconnect():
-    print('Client disconnected')
+    if current_user.is_authenticated:
+        print(f'Client disconnected: {current_user.id}')
 
 @socketio.on('join')
 def on_join(data):
+    if not current_user.is_authenticated:
+        return
     chat_id = data['chat_id']
-    join_room(chat_id)
-    print(f'Client joined room: {chat_id}')
+    # Verify user is part of this chat
+    chat = Chat.get_by_id(chat_id)
+    if chat and str(current_user.id) in chat['participants']:
+        join_room(chat_id)
+        print(f'Client {current_user.id} joined room: {chat_id}')
 
 @socketio.on('leave')
 def on_leave(data):
+    if not current_user.is_authenticated:
+        return
     chat_id = data['chat_id']
     leave_room(chat_id)
-    print(f'Client left room: {chat_id}')
+    print(f'Client {current_user.id} left room: {chat_id}')
 
 @socketio.on('message')
 def handle_message(data):
+    if not current_user.is_authenticated:
+        return
+        
     chat_id = data['chat_id']
     content = data['content']
     
     try:
+        # Verify user is part of this chat
+        chat = Chat.get_by_id(chat_id)
+        if not chat or str(current_user.id) not in chat['participants']:
+            emit('error', {'message': 'Unauthorized'}, room=request.sid)
+            return
+            
         message = Message(
             chat_id=chat_id,
             sender_id=current_user.id,
@@ -305,15 +330,20 @@ def handle_message(data):
         )
         message.save()
         
+        # Get sender info
+        sender = users_collection.find_one({'_id': ObjectId(current_user.id)})
+        
+        # Emit message with additional details
         emit('message', {
             'sender_id': str(current_user.id),
+            'sender_name': sender['username'],
             'content': content,
             'created_at': message.created_at.isoformat()
         }, room=chat_id)
-        print(f'Message sent in room {chat_id}: {content}')
+        print(f'Message sent in room {chat_id} by {current_user.id}: {content}')
     except Exception as e:
         print(f'Error handling message: {str(e)}')
         emit('error', {'message': 'Failed to send message'}, room=request.sid)
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True, allow_unsafe_werkzeug=True, host='0.0.0.0', port=5000) 
+    socketio.run(app, debug=True, host='0.0.0.0', port=5000) 

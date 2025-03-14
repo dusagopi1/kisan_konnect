@@ -50,8 +50,8 @@
                 <h3>{{ active_chat.other_user.username }}</h3>
             </div>
         </div>
-
-        <div class="chat-messages" id="messageContainer">
+        
+        <div class="chat-messages" id="messages">
             {% for message in messages %}
             <div class="message {% if message.sender_id == current_user.id %}sent{% else %}received{% endif %}">
                 <div class="message-content">
@@ -63,8 +63,8 @@
         </div>
 
         <div class="chat-input">
-            <form id="messageForm" class="message-form">
-                <input type="text" id="messageInput" placeholder="Type your message..." autocomplete="off">
+            <form class="message-form" id="messageForm">
+                <input type="text" id="messageInput" placeholder="Type your message..." required>
                 <button type="submit">
                     <i class="fas fa-paper-plane"></i>
                 </button>
@@ -73,8 +73,8 @@
         {% else %}
         <div class="no-chat-selected">
             <i class="fas fa-comments"></i>
-            <h3>Select a chat or search for farmers</h3>
-            <p>Start connecting with farmers in your community</p>
+            <h3>Select a chat or start a new conversation</h3>
+            <p>Search for farmers to start chatting</p>
         </div>
         {% endif %}
     </div>
@@ -83,80 +83,139 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const userSearch = document.getElementById('userSearch');
-    const searchResults = document.getElementById('searchResults');
-    const messageContainer = document.getElementById('messageContainer');
-    const messageForm = document.getElementById('messageForm');
-    const messageInput = document.getElementById('messageInput');
+    const activeChat = {% if active_chat %}true{% else %}false{% endif %};
     
-    // Function to check if user is near bottom of message container
-    function isNearBottom() {
-        const threshold = 100; // pixels from bottom
-        const position = messageContainer.scrollHeight - messageContainer.scrollTop - messageContainer.clientHeight;
-        return position < threshold;
-    }
+    if (activeChat) {
+        const chatId = "{{ active_chat._id }}";
+        const currentUserId = "{{ current_user.id }}";
+        let socket = null;
+        let reconnectAttempts = 0;
+        const maxReconnectAttempts = 5;
 
-    // Modified scroll to bottom function
-    function scrollToBottom(force = false) {
-        if (messageContainer) {
-            if (force || isNearBottom()) {
-                messageContainer.scrollTop = messageContainer.scrollHeight;
+        function connectSocket() {
+            // Initialize Socket.IO with error handling
+            try {
+                socket = io({
+                    transports: ['websocket'],
+                    upgrade: false,
+                    reconnection: true,
+                    reconnectionAttempts: 5,
+                    reconnectionDelay: 1000,
+                    timeout: 20000
+                });
+
+                // Socket connection handlers
+                socket.on('connect', function() {
+                    console.log('Connected to WebSocket');
+                    socket.emit('join', { chat_id: chatId });
+                    reconnectAttempts = 0;
+                });
+
+                socket.on('connect_error', function(error) {
+                    console.error('Connection error:', error);
+                    reconnectAttempts++;
+                    if (reconnectAttempts >= maxReconnectAttempts) {
+                        console.error('Max reconnection attempts reached');
+                        showError('Connection lost. Please refresh the page.');
+                    }
+                });
+
+                socket.on('disconnect', function() {
+                    console.log('Disconnected from WebSocket');
+                });
+
+                // Message handlers
+                socket.on('message', function(data) {
+                    const messagesDiv = document.getElementById('messages');
+                    const messageClass = data.sender_id === currentUserId ? 'sent' : 'received';
+                    const messageTime = new Date(data.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    
+                    const messageHtml = `
+                        <div class="message ${messageClass}">
+                            <div class="message-content">
+                                ${data.content}
+                                <span class="message-time">${messageTime}</span>
+                            </div>
+                        </div>
+                    `;
+                    
+                    messagesDiv.insertAdjacentHTML('beforeend', messageHtml);
+                    scrollToBottom();
+                });
+
+                socket.on('error', function(data) {
+                    console.error('Socket error:', data.message);
+                    showError(data.message);
+                });
+            } catch (error) {
+                console.error('Error initializing socket:', error);
+                showError('Failed to initialize chat. Please refresh the page.');
             }
         }
-    }
 
-    {% if active_chat %}
-    // Initialize Socket.IO
-    const socket = io();
-    
-    // Join the chat room
-    socket.emit('join', { chat_id: '{{ active_chat._id }}' });
+        // Initialize the connection
+        connectSocket();
 
-    // Handle incoming messages
-    socket.on('message', function(data) {
-        const wasNearBottom = isNearBottom();
-        appendMessage(data);
-        if (wasNearBottom) {
-            scrollToBottom(true);
-        }
-    });
+        // Message form handling
+        const messageForm = document.getElementById('messageForm');
+        const messageInput = document.getElementById('messageInput');
 
-    // Handle message sending
-    if (messageForm) {
         messageForm.addEventListener('submit', function(e) {
             e.preventDefault();
             const content = messageInput.value.trim();
-            if (!content) return;
-
-            socket.emit('message', {
-                chat_id: '{{ active_chat._id }}',
-                content: content
-            });
             
-            messageInput.value = '';
-            scrollToBottom(true); // Force scroll to bottom when user sends a message
+            if (content && socket && socket.connected) {
+                socket.emit('message', {
+                    chat_id: chatId,
+                    content: content
+                });
+                messageInput.value = '';
+            } else if (!socket || !socket.connected) {
+                showError('Connection lost. Trying to reconnect...');
+                connectSocket();
+            }
         });
-    }
-    {% endif %}
 
-    // User search
-    let searchTimeout;
-    userSearch.addEventListener('input', function() {
-        clearTimeout(searchTimeout);
-        const query = this.value.trim();
-        
-        if (query.length < 2) {
-            searchResults.innerHTML = '';
-            searchResults.style.display = 'none';
-            return;
+        // Utility functions
+        function scrollToBottom() {
+            const messagesDiv = document.getElementById('messages');
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
         }
 
-        searchTimeout = setTimeout(() => {
-            fetch(`/chat/search?q=${encodeURIComponent(query)}`)
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'alert alert-danger';
+            errorDiv.textContent = message;
+            document.querySelector('.chat-main').insertAdjacentElement('afterbegin', errorDiv);
+            setTimeout(() => errorDiv.remove(), 5000);
+        }
+
+        // Scroll to bottom on load
+        scrollToBottom();
+
+        // Handle page unload
+        window.addEventListener('beforeunload', function() {
+            if (socket) {
+                socket.emit('leave', { chat_id: chatId });
+                socket.disconnect();
+            }
+        });
+    }
+
+    // Search functionality
+    const userSearch = document.getElementById('userSearch');
+    const searchResults = document.getElementById('searchResults');
+
+    userSearch.addEventListener('input', function() {
+        const query = this.value.trim();
+        if (query.length >= 2) {
+            fetch(`/search_users?q=${encodeURIComponent(query)}`)
                 .then(response => response.json())
-                .then(data => {
+                .then(users => {
                     searchResults.innerHTML = '';
-                    data.forEach(user => {
+                    searchResults.style.display = 'block';
+                    
+                    users.forEach(user => {
                         const div = document.createElement('div');
                         div.className = 'search-result-item';
                         div.innerHTML = `
@@ -164,18 +223,20 @@ document.addEventListener('DOMContentLoaded', function() {
                             <span>${user.username}</span>
                         `;
                         div.addEventListener('click', () => {
-                            window.location.href = `/chat/start/${user.id}`;
+                            window.location.href = `/chat_start/${user._id}`;
                         });
                         searchResults.appendChild(div);
                     });
-                    searchResults.style.display = data.length ? 'block' : 'none';
-                });
-        }, 300);
+                })
+                .catch(error => console.error('Error:', error));
+        } else {
+            searchResults.style.display = 'none';
+        }
     });
 
     // Hide search results when clicking outside
     document.addEventListener('click', function(e) {
-        if (!e.target.closest('.chat-search')) {
+        if (!userSearch.contains(e.target) && !searchResults.contains(e.target)) {
             searchResults.style.display = 'none';
         }
     });
@@ -187,27 +248,6 @@ document.addEventListener('DOMContentLoaded', function() {
             window.location.href = `/chat/${chatId}`;
         });
     });
-
-    // Helper functions
-    function appendMessage(message) {
-        const div = document.createElement('div');
-        div.className = `message ${message.sender_id === '{{ current_user.id }}' ? 'sent' : 'received'}`;
-        div.innerHTML = `
-            <div class="message-content">
-                ${message.content}
-                <span class="message-time">${formatTime(message.created_at)}</span>
-            </div>
-        `;
-        messageContainer.appendChild(div);
-    }
-
-    function formatTime(timestamp) {
-        const date = new Date(timestamp);
-        return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-    }
-
-    // Initial scroll to bottom
-    scrollToBottom(true);
 });
 </script>
 
