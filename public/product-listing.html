@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Listing - KisanConnect</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="bg-green-50">
+    <nav class="bg-green-700 text-white p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold">KisanConnect</h1>
+            <div class="flex items-center">
+                <span id="user-name" class="mr-4"></span>
+                <button id="logout-btn" class="bg-white text-green-700 px-3 py-1 rounded hover:bg-gray-100">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-8">
+        <!-- Search and Filter Section -->
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-gray-800">Available Products</h2>
+                <a href="wholesaler-dashboard.html" class="text-green-600 hover:text-green-800 font-medium">
+                    Back to Dashboard
+                </a>
+            </div>
+
+            <form id="filter-form" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- State Filter -->
+                    <div>
+                        <label for="state-filter" class="block text-gray-700 text-sm font-bold mb-2">State</label>
+                        <select id="state-filter" name="state" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-600">
+                            <option value="">All States</option>
+                            <!-- Will be populated from locations.js -->
+                        </select>
+                    </div>
+
+                    <!-- District Filter -->
+                    <div>
+                        <label for="district-filter" class="block text-gray-700 text-sm font-bold mb-2">District</label>
+                        <select id="district-filter" name="district" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-600" disabled>
+                            <option value="">All Districts</option>
+                            <!-- Will be populated based on selected state -->
+                        </select>
+                    </div>
+
+                    <!-- Category Filter -->
+                    <div>
+                        <label for="category-filter" class="block text-gray-700 text-sm font-bold mb-2">Category</label>
+                        <select id="category-filter" name="category" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-600">
+                            <option value="">All Categories</option>
+                            <option value="grains">Grains</option>
+                            <option value="vegetables">Vegetables</option>
+                            <option value="fruits">Fruits</option>
+                            <option value="dairy">Dairy Products</option>
+                            <option value="pulses">Pulses</option>
+                            <option value="spices">Spices</option>
+                            <option value="oils">Oils</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end">
+                    <button type="reset" class="text-gray-600 hover:text-gray-800 font-medium mr-4">
+                        Reset Filters
+                    </button>
+                    <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                        Apply Filters
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Product count and sorting options -->
+        <div class="flex items-center justify-between mb-4">
+            <p id="product-count" class="text-gray-600">Loading products...</p>
+            <div class="flex items-center">
+                <label for="sort-option" class="text-gray-600 mr-2">Sort by:</label>
+                <select id="sort-option" class="px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-600">
+                    <option value="newest">Newest First</option>
+                    <option value="price-low">Price: Low to High</option>
+                    <option value="price-high">Price: High to Low</option>
+                    <option value="time-left">Time Left</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Products Grid -->
+        <div id="products-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Loading placeholder -->
+            <div class="col-span-full flex items-center justify-center h-48">
+                <div class="text-center">
+                    <svg class="animate-spin h-8 w-8 mx-auto text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <p class="mt-2 text-gray-600">Loading products...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- No products message (hidden by default) -->
+        <div id="no-products-message" class="hidden bg-white rounded-lg shadow p-8 text-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h3 class="text-lg font-bold text-gray-700 mb-2">No Products Found</h3>
+            <p class="text-gray-500">Try adjusting your filter criteria or check back later for new listings.</p>
+        </div>
+    </div>
+
+    <!-- Product Card Template -->
+    <template id="product-template">
+        <div class="bg-white rounded-lg shadow overflow-hidden transition-transform duration-300 hover:transform hover:scale-105">
+            <div class="product-image-container h-48 bg-gray-200 relative">
+                <!-- Image will be inserted here -->
+                <div class="absolute top-2 right-2">
+                    <span class="product-status px-2 py-1 text-xs font-bold rounded"></span>
+                </div>
+            </div>
+            <div class="p-4">
+                <h3 class="product-name text-lg font-bold text-gray-800 mb-1"></h3>
+                <div class="flex items-center mb-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span class="product-location text-xs text-gray-500"></span>
+                </div>
+                <p class="product-details text-sm text-gray-600 mb-2"></p>
+                <div class="flex justify-between items-center mb-3">
+                    <div>
+                        <span class="text-xs text-gray-500">Min. Bid:</span>
+                        <span class="product-min-bid text-lg font-bold text-green-600"></span>
+                    </div>
+                    <div class="text-right">
+                        <div class="countdown-container">
+                            <div class="flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span class="product-countdown text-xs font-medium"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-between items-center">
+                    <button class="view-details-btn text-green-600 hover:text-green-800 text-sm font-medium">
+                        View Details
+                    </button>
+                    <button class="place-bid-btn bg-green-600 hover:bg-green-700 text-white text-sm font-bold py-1 px-3 rounded focus:outline-none focus:shadow-outline">
+                        Place Bid
+                    </button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-storage-compat.js"></script>
+    
+    <!-- App JS -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/locations.js"></script>
+    <script src="js/product-listing.js"></script>
+</body>
+</html>

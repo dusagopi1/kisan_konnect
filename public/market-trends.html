@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Market Trends Analysis - KisanConnect</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- Chart.js for visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-green-50">
+    <nav class="bg-green-700 text-white p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold">KisanConnect</h1>
+            <div class="flex items-center space-x-4">
+                <!-- Notification Bell -->
+                <div id="notification-bell-container">
+                    <!-- Will be loaded via JavaScript -->
+                </div>
+                
+                <!-- Chat Button -->
+                <a href="chats.html" class="text-white hover:text-green-200 mr-4 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd" />
+                    </svg>
+                    <span>Chats</span>
+                </a>
+                
+                <div class="flex items-center">
+                    <a href="profile.html" class="text-white hover:text-green-200 mr-4 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                        </svg>
+                        <span id="user-name"></span>
+                    </a>
+                    <button id="logout-btn" class="bg-white text-green-700 px-3 py-1 rounded hover:bg-gray-100">Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Market Trend Analysis & Forecasting</h2>
+                <a href="farmer-dashboard.html" class="text-green-600 hover:text-green-800 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+                    </svg>
+                    Back to Dashboard
+                </a>
+            </div>
+            <p class="text-gray-600 mb-6">Analyze market trends and forecast prices to make informed decisions about your agricultural products.</p>
+            
+            <!-- Search Filters -->
+            <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                <h3 class="text-lg font-semibold text-gray-700 mb-4">Search Filters</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                        <label for="commodity" class="block text-sm font-medium text-gray-700 mb-1">Commodity</label>
+                        <select id="commodity" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500">
+                            <option value="">Select Commodity</option>
+                            <!-- Will be populated dynamically -->
+                        </select>
+                    </div>
+                    <div>
+                        <label for="state" class="block text-sm font-medium text-gray-700 mb-1">State</label>
+                        <select id="state" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500">
+                            <option value="">All States</option>
+                            <!-- Will be populated dynamically -->
+                        </select>
+                    </div>
+                    <div>
+                        <label for="district" class="block text-sm font-medium text-gray-700 mb-1">District</label>
+                        <select id="district" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500">
+                            <option value="">All Districts</option>
+                            <!-- Will be populated dynamically -->
+                        </select>
+                    </div>
+                    <div>
+                        <label for="market" class="block text-sm font-medium text-gray-700 mb-1">Market</label>
+                        <select id="market" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500">
+                            <option value="">All Markets</option>
+                            <!-- Will be populated dynamically -->
+                        </select>
+                    </div>
+                    <div>
+                        <label for="days" class="block text-sm font-medium text-gray-700 mb-1">Time Period</label>
+                        <select id="days" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500">
+                            <option value="7">Last 7 Days</option>
+                            <option value="14">Last 14 Days</option>
+                            <option value="30" selected>Last 30 Days</option>
+                            <option value="60">Last 60 Days</option>
+                            <option value="90">Last 90 Days</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2 lg:col-span-3 flex items-end">
+                        <button id="search-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                            </svg>
+                            Search
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Loading State -->
+            <div id="loading" class="hidden flex flex-col items-center justify-center py-8">
+                <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500 mb-4"></div>
+                <p class="text-gray-600">Loading market data...</p>
+            </div>
+            
+            <!-- No Data State -->
+            <div id="no-data" class="hidden flex flex-col items-center justify-center py-8">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M12 14h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p class="text-gray-600 text-lg mb-2">No Data Available</p>
+                <p class="text-gray-500 text-center">Please select different search criteria or try another commodity.</p>
+            </div>
+            
+            <!-- Results Section -->
+            <div id="results" class="hidden">
+                <!-- Price Trends Summary -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-white p-4 rounded-lg border shadow-sm">
+                        <h4 class="text-lg font-semibold text-gray-700 mb-2">Current Price</h4>
+                        <div class="flex items-center">
+                            <span id="current-price" class="text-2xl font-bold text-gray-900">₹0.00</span>
+                            <span class="text-sm text-gray-500 ml-2">per quintal</span>
+                        </div>
+                        <p id="price-date" class="text-xs text-gray-500 mt-1">As of --/--/----</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg border shadow-sm">
+                        <h4 class="text-lg font-semibold text-gray-700 mb-2">Price Change</h4>
+                        <div class="flex items-center">
+                            <span id="price-change" class="text-2xl font-bold">0.00%</span>
+                            <span id="price-change-icon" class="ml-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                                </svg>
+                            </span>
+                        </div>
+                        <p id="period-text" class="text-xs text-gray-500 mt-1">Over the last 30 days</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg border shadow-sm">
+                        <h4 class="text-lg font-semibold text-gray-700 mb-2">Price Range</h4>
+                        <div class="flex items-end">
+                            <div>
+                                <p class="text-xs text-gray-500 mb-1">Min</p>
+                                <span id="min-price" class="text-lg font-semibold text-gray-900">₹0.00</span>
+                            </div>
+                            <div class="mx-2 mb-1">—</div>
+                            <div>
+                                <p class="text-xs text-gray-500 mb-1">Max</p>
+                                <span id="max-price" class="text-lg font-semibold text-gray-900">₹0.00</span>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Price range during selected period</p>
+                    </div>
+                </div>
+                
+                <!-- Price Chart -->
+                <div class="bg-white p-4 rounded-lg border shadow-sm mb-6">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-4">Price Trends Over Time</h3>
+                    <div class="w-full h-80">
+                        <canvas id="price-chart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Market Data Table -->
+                <div class="bg-white p-4 rounded-lg border shadow-sm">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-4">Recent Market Data</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Market</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Commodity</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Variety</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Min Price (₹)</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Max Price (₹)</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Modal Price (₹)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="market-data-table" class="bg-white divide-y divide-gray-200">
+                                <!-- Will be populated dynamically -->
+                                <tr>
+                                    <td colspan="7" class="px-6 py-4 text-center text-gray-500">No data available</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    
+    <!-- App JS -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/locations.js"></script>
+    <script src="js/notification-loader.js"></script>
+    <script src="js/market-trends.js"></script>
+    <script src="js/gemini-chatbot.js"></script>
+</body>
+</html>
